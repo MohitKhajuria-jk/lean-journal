@@ -1,80 +1,181 @@
 # Lean Journal
 
-A public fitness journal with private per-user records: meals, hydration, morning runs, walking, evening gym sessions, body measurements and progress photos.
+**Small steps. Real change.**
 
-## Source status
+A fitness journal for building a consistent routine and understanding progress through your own data. Track meals, hydration, movement, strength training, body measurements, and progress photos in one place.
 
-This repository contains a **rebuild**, not a byte-for-byte export of the existing production deployment. The public landing page, Firebase browser flow, optional draft storage and feature client were recovered; the dashboard markup, core browser client and server were recreated after workspace cleanup removed the later local source.
+[Live website](https://lean-journal.vercel.app/) · [Getting started](#getting-started) · [Configuration](#configuration) · [Privacy](#privacy-and-security)
 
-**The existing live Vercel site has not been replaced or connected to this repository.** Existing production account-cookie formats and every historical record shape have not been verified against this rebuild. Do not point it at the production Blob store until a separate compatibility review and backup/migration plan are complete. Use a separate private Blob store for a staging deployment.
+> **Repository status:** This repository contains a tested rebuild of Lean Journal. It is maintained separately from the current live deployment and has not replaced it. Review account and storage compatibility before connecting this code to existing production data.
+
+## Overview
+
+Lean Journal turns daily check-ins into a clearer picture of your routine. New journals start empty: weights, goals, meals, photos, and progress are recorded by the person using the app.
+
+Morning running and evening gym sessions stay separate, making it easier to plan, record, and review both activities.
 
 ## Features
 
-- Blank journals: no prefilled weight, goal, logs, photos, conversations or progress.
-- Editable daily meals, water, weight, waist, running, walking and gym logs.
-- Morning running and evening gym remain separate activities and plans.
-- Weekly averages, history, measured-data charts and explicitly uncertain goal projections.
-- Private photos, side-by-side comparison and an overlay slider.
-- Dated workout plans, rest days and calendar exports.
-- Profile name, age, gender, date of birth, contact email and avatar.
-- Private access keys or verified Firebase email/password login and recovery.
-- Explicit email linking from an authenticated profile; matching contact emails alone never transfer a journal.
-- Optional Gemini adviser, weekly review and editable food-photo estimate ranges.
-- Adult/consent gates; AI questions, selected logs or meal photos are sent only after an explicit request.
-- Reminders while the app is open, calendar alerts and installable PWA assets.
-- Opt-in local drafts; manual reviewed cloud save, and clearing at sign-out.
-- JSON export and journal deletion.
+| Area | Capabilities |
+| --- | --- |
+| Daily journal | Editable meals, water intake, running, walking, gym sessions, weight, and waist measurements |
+| Progress tracking | Weight charts, weekly averages, daily history, and qualified goal projections based on recorded measurements |
+| Progress photos | Private uploads, side-by-side comparison, and an adjustable overlay view |
+| Workout planning | Separate morning-run and evening-gym plans, recovery days, and calendar exports |
+| Profile | Name, age, date of birth, gender, contact email, and profile picture |
+| Authentication | Private access keys, verified Firebase email/password login, and password recovery |
+| AI adviser | Optional routine guidance, weekly reflections, and editable meal-photo estimate ranges |
+| Routine support | Reminders while the app is open, calendar alerts, and installable PWA support |
+| Data controls | JSON export, journal deletion, and optional device-only drafts |
 
-## Local preview
+## Technology
 
-Use Node 22 or newer.
+| Layer | Implementation |
+| --- | --- |
+| Interface | HTML, CSS, and browser JavaScript |
+| Server | Node.js with a Vercel serverless function |
+| Storage | Private Vercel Blob storage |
+| Email authentication | Firebase Authentication |
+| Token verification | `jose` with Firebase public signing keys |
+| AI | Google Gemini API |
+| Local development | In-memory storage with external server-side services disabled |
+| Validation | Node.js tests, syntax checks, and UI-target checks |
+
+## Getting started
+
+### Requirements
+
+- Node.js 22 or newer
+- npm
+- Git
+
+### Run locally
 
 ```sh
+git clone https://github.com/MohitKhajuria-jk/lean-journal.git
+cd lean-journal
 npm ci
 npm run build:assets
-npm run check
-npm test
 npm run dev
 ```
 
-Open `http://localhost:3000/`. The local preview uses **in-memory storage**, resets when restarted, and disables server-side Firebase verification and Gemini requests. For an empty disposable local journal, visit `/__preview`. That bootstrap path exists only in `scripts/dev.mjs`, never in the deployed server.
+Open **http://localhost:3000/**.
 
-Do not enter real Firebase credentials during the local preview: the recovered browser flow contacts Google directly. Use the local private-key journal or `/__preview` instead.
+For a disposable, empty preview journal, open **http://localhost:3000/__preview**. This development-only route is not included in the production router.
 
-If using a managed Sites preview, the dev script honors `--port`.
+**Local preview behavior**
 
-## Vercel setup for a separate staging project
+- Records stay in memory and reset when the server restarts.
+- Server-side Firebase verification and Gemini calls are disabled.
+- Use the local private-key journal or the preview route for testing.
+- Do not enter real Firebase credentials in the local preview: the browser authentication flow still contacts Google directly.
 
-1. Import this repository into a **new staging Vercel project**, using the repository root and Node 22. `vercel.json` routes requests to `api/index.js`.
-2. Create a **private** Vercel Blob store for staging and set `BLOB_READ_WRITE_TOKEN` server-side.
-3. Optional: set `GEMINI_API_KEY`. `GEMINI_MODEL` defaults to `gemini-3.5-flash-lite`; select a model available to your Google project. Provider availability and free quotas can change. Without a key, tracking works and AI requests return an unavailable message.
-4. Enable Firebase Email/Password authentication. Add the staging domain to Firebase Authentication's authorized domains.
-5. Firebase's web configuration is public. The existing project is the default; optional `FIREBASE_PROJECT_ID`, `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN` environment overrides select a separate project. No Firebase service-account private key is required.
-6. Run a separate staging smoke test before considering production replacement. Verify email delivery with an account you control; the automated tests do not create Firebase users or send email.
+### Available commands
 
-Never commit `.env` values, Blob tokens, Gemini keys, account access keys, cookies or journal exports. `.env.example` contains placeholders and public Firebase web configuration only.
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the local preview |
+| `npm run build:assets` | Generate the server's bundled browser assets |
+| `npm run check` | Check script syntax, inline scripts, and UI targets |
+| `npm test` | Run the local regression suite |
 
-## Development
+Run validation before committing:
 
-Editable browser assets live in `web/`. `npm run build:assets` produces the checked-in `lib/web-assets.js` bundle. Rebuild it after changing browser files. The Vercel function uses the bundle, so the assets remain available without a static-output step.
+```sh
+npm run build:assets
+npm run check
+npm test
+```
 
-- `lib/router.js`: routing, journal ownership, sessions, validation and feature endpoints.
-- `lib/firebase-auth.js`: RS256 JWT verification, issuer/audience checks, verified-email check and fresh Firebase account lookup.
-- `lib/storage.js`: private Blob adapter and isolated memory adapter for local tests.
-- `lib/ai.js`: server-side Gemini requests and bounded food estimates.
-- `lib/validation.js`: input schemas and request-size checks.
-- `tests/`: local-only authentication, privacy, storage, feature and signed-JWT regression checks.
+The included GitHub Actions workflow runs these checks on pushes and pull requests.
 
-Images are resized client-side before upload. Calendar exports use the device's local times. Browser reminders require an open app; exported calendar alerts depend on the calendar app. Progress photos and profile pictures are excluded from JSON exports, so retain originals separately.
+## Configuration
 
-## Privacy and limits
+See [`.env.example`](.env.example) for variable names and public Firebase configuration. Production server variables are configured in Vercel. The local preview does not require production credentials.
 
-Private records use server-controlled journal prefixes. Firebase sessions are opaque, HttpOnly, Secure and SameSite cookies; private access keys are bearer credentials. A linked Firebase login never takes over a journal solely because an email matches a profile.
+| Variable | Purpose |
+| --- | --- |
+| `BLOB_READ_WRITE_TOKEN` | Server-side access to the deployment's private Blob store |
+| `GEMINI_API_KEY` | Optional server-side key for AI features |
+| `GEMINI_MODEL` | Optional model override; defaults to `gemini-3.5-flash-lite` |
+| `FIREBASE_PROJECT_ID` | Optional Firebase project override |
+| `FIREBASE_API_KEY` | Optional public Firebase web API-key override |
+| `FIREBASE_AUTH_DOMAIN` | Optional Firebase authentication-domain override |
 
-The service worker caches only the generic offline page and public icons, never private API responses, journal pages or tokens. Optional drafts are unencrypted device storage and require manual review before saving to the cloud.
+Firebase defaults point to the existing Lean Journal project. Use overrides when testing against a separate Firebase project. A Firebase service-account private key is not required.
 
-AI responses are general wellness guidance, not medical advice. Food estimates are approximate ranges. Google free-tier data processing may include product improvement; the UI discloses this before consent. API calls are limited per journal; key creation/login also have daily request limits. These storage-backed limits are best effort under concurrent requests; use an atomic rate-limit service before substantial public traffic.
+Without a Gemini key, journal tracking remains available and AI requests report that the service is not configured. Model availability and provider quotas depend on the Google project.
 
-Deleting a journal removes its app data and linking index; it does not delete the separately managed Firebase Authentication identity. Changing a Firebase password invalidates future verification via the fresh-account lookup; an already issued app session lasts up to 30 days unless logged out or the journal is deleted. A future security enhancement should provide a revoke-all-sessions control.
+## Deployment
 
-No license is granted by this repository unless its owner adds one.
+### Start with staging
+
+1. Import this repository into a **new staging Vercel project**, using Node.js 22 and the repository root.
+2. Create a **separate private Blob store** and configure `BLOB_READ_WRITE_TOKEN`.
+3. Add `GEMINI_API_KEY` if AI features are required.
+4. Enable Firebase **Email/Password** authentication and authorize the staging domain.
+5. Verify journal creation, login, uploads, email verification, and recovery using an account you control.
+
+[`vercel.json`](vercel.json) routes requests to `api/index.js`. Browser assets are served from the generated `lib/web-assets.js` bundle.
+
+> **Before production:** Existing production cookie formats and historical record compatibility have not been fully verified against this rebuild. Back up existing data and complete a compatibility or migration review before reusing the production Blob store. Importing this repository does not update the current live site.
+
+## Project organization
+
+| Location | Responsibility |
+| --- | --- |
+| `api/index.js` | Vercel request adapter |
+| `lib/router.js` | API routes, ownership checks, sessions, and journal operations |
+| `lib/firebase-auth.js` | Firebase token verification and fresh account-status checks |
+| `lib/storage.js` | Private Blob storage and the in-memory test adapter |
+| `lib/validation.js` | Input validation and JSON request-size checks |
+| `lib/ai.js` | Gemini requests and food-estimate validation |
+| `web/` | Editable interface, styles, browser clients, and PWA assets |
+| `scripts/` | Preview, asset generation, and source checks |
+| `tests/` | Authentication, privacy, feature, signed-token, and calendar tests |
+
+After changing files in `web/`, run `npm run build:assets` and commit the regenerated bundle alongside the source changes.
+
+## Privacy and security
+
+- **Journal isolation:** Records and images use server-controlled journal storage prefixes.
+- **Authentication:** App sessions use opaque HttpOnly, Secure, SameSite cookies. Private access keys are bearer credentials and must be kept secret.
+- **Explicit email linking:** Users connect a verified Firebase login from an authenticated profile. A matching contact email alone never grants access to a journal.
+- **Optional AI sharing:** Questions, selected text logs, or meal photos are sent only after the relevant consent and adult confirmation. Adviser context excludes progress photos and profile contact details.
+- **Limited offline caching:** The service worker caches the generic offline page and public icons, excluding private journal pages, API responses, and tokens.
+- **Device drafts:** Optional drafts are unencrypted local storage. They require review before cloud saving and are cleared at sign-out.
+- **Export and deletion:** JSON exports exclude image files. Journal deletion removes app data and its login-linking index, while the Firebase identity remains separately managed.
+
+Never commit service credentials, session cookies, access keys, or personal journal exports. Firebase web configuration is public; Blob tokens and Gemini keys are server-side secrets.
+
+## Operational limits
+
+- Browser reminders require an open app. Closed-app alerts depend on importing calendar events into a compatible calendar app.
+- Calendar exports use local device times.
+- Food-photo nutrition estimates are approximate ranges, not measured values. They require review before being appended to a meal log.
+- Goal projections depend on available measurements and are uncertain estimates, not promised outcomes.
+- AI guidance is general wellness information, not medical advice. Google free-tier processing may include product improvement; the interface discloses this before consent.
+- Storage-backed request limits are best effort under concurrency. Use an atomic rate-limit service before substantial public traffic.
+- App sessions can last up to 30 days. Resetting a Firebase password does not automatically revoke an already-issued app session; sign-out or journal deletion ends the applicable session access.
+
+## Testing
+
+The regression suite covers:
+
+- Empty journals, authentication, CSRF protection, and cross-user isolation
+- Profile validation and date-of-birth age calculation
+- Workout plans, recovery days, reminders, and calendar formatting
+- Signed Firebase-style tokens, account status, and verified-email requirements
+- Email linking, ownership conflicts, session logout, and record preservation
+- AI consent, age restrictions, and context minimization
+- Private photo access and journal cleanup
+
+Tests use local fixtures and in-memory storage. They do not create Firebase users, send verification emails, or prove live provider delivery.
+
+## Contributing
+
+Keep changes focused, preserve empty defaults and journal isolation, and include meaningful checks for behavior changes. Run the validation commands before opening a pull request. Do not include personal logs or credentials in examples or issue reports.
+
+## License
+
+No license has been granted. Reuse rights remain with the repository owner unless a license is added.
