@@ -6,7 +6,19 @@ A fitness journal for building a consistent routine and understanding progress t
 
 [Live website](https://lean-journal.vercel.app/) · [Getting started](#getting-started) · [Configuration](#configuration) · [Privacy](#privacy-and-security)
 
-> **Repository status:** This repository contains a tested rebuild of Lean Journal. It is maintained separately from the current live deployment and has not replaced it. Review account and storage compatibility before connecting this code to existing production data.
+> **Repository status:** This source version of Lean Journal is maintained separately from the current live deployment and has not replaced it. Review account and storage compatibility before connecting this code to existing production data.
+
+## Screenshots
+
+Captured from the local preview. The dashboard starts empty; no personal journal records are shown.
+
+### Landing page
+
+![Lean Journal landing page with Get started button](docs/screenshots/landing.jpg)
+
+### Journal dashboard
+
+![Empty Lean Journal dashboard with separate morning running and evening gym activities](docs/screenshots/dashboard.jpg)
 
 ## Overview
 
@@ -118,7 +130,7 @@ Without a Gemini key, journal tracking remains available and AI requests report 
 
 [`vercel.json`](vercel.json) routes requests to `api/index.js`. Browser assets are served from the generated `lib/web-assets.js` bundle.
 
-> **Before production:** Existing production cookie formats and historical record compatibility have not been fully verified against this rebuild. Back up existing data and complete a compatibility or migration review before reusing the production Blob store. Importing this repository does not update the current live site.
+> **Before production:** Existing production cookie formats and historical record compatibility have not been fully verified against this source version. Back up existing data and complete a compatibility or migration review before reusing the production Blob store. Importing this repository does not update the current live site.
 
 ## Project organization
 
